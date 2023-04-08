@@ -27,54 +27,55 @@ class CronController extends Controller
             if ($phase->tickets->count() <= 0 && (clone $lotteryBonus)->count() <= 0) {
                 continue;
             }
-            $ticketNumber    = $phase->tickets->pluck('ticket_number');
+            $ticketNumber    = $phase->tickets->unique('ticket_number')->pluck('ticket_number');
             $winBonus        = clone $lotteryBonus;
             $getTicketNumber = $ticketNumber->shuffle()->take($winBonus->count());
-
             $allTickets = $phase->tickets;
 
             foreach ($getTicketNumber as $key => $numbers) {
-                $ticket = (clone $allTickets)->where('ticket_number', $numbers)->first();
-                $user   = $ticket->user;
-                $bonus  = $winBonus[$key]->amount;
+                $tickets = (clone $allTickets)->where('ticket_number', $numbers)->where('phase_id',$phase->id)->all();
+                $bonus  = round ($winBonus[$key]->amount / count($tickets));
 
-                $winner = new Winner();
-                $winner->ticket_id     = $ticket->id;
-                $winner->user_id       = $user->id;
-                $winner->phase_id      = $phase->id;
-                $winner->ticket_number = $numbers;
-                $winner->level         = @$winBonus[$key]->level;
-                $winner->win_bonus     = $bonus;
-                $winner->save();
+                foreach ($tickets as $key_ticket => $ticket) {
+                    $user   = $ticket->user;
+                    $winner = new Winner();
+                    $winner->ticket_id     = $ticket->id;
+                    $winner->user_id       = $user->id;
+                    $winner->phase_id      = $phase->id;
+                    $winner->ticket_number = $numbers;
+                    $winner->level         = @$winBonus[$key]->level;
+                    $winner->win_bonus     = $bonus;
+                    $winner->save();
 
-                $user->balance += $bonus;
-                $user->save();
+                    $user->balance += $bonus;
+                    $user->save();
 
-                $transaction =  new Transaction();
-                $transaction->user_id      = $user->id;
-                $transaction->amount       = getAmount($bonus);
-                $transaction->charge       = 0;
-                $transaction->trx_type     = '-';
-                $transaction->details      = 'You are winner ' . $winBonus[$key]->level . ' of ' . @$ticket->lottery->name . ' of phase ' . @$ticket->phase->phase_number . ' ' . $phase->lottery->name;
-                $transaction->trx          = getTrx();
-                $transaction->remark       = 'win_bonus';
-                $transaction->post_balance = $user->balance;
-                $transaction->save();
+                    $transaction =  new Transaction();
+                    $transaction->user_id      = $user->id;
+                    $transaction->amount       = getAmount($bonus);
+                    $transaction->charge       = 0;
+                    $transaction->trx_type     = '-';
+                    $transaction->details      = 'You are winner ' . $winBonus[$key]->level . ' of ' . @$ticket->lottery->name . ' of phase ' . @$ticket->phase->phase_number . ' ' . $phase->lottery->name;
+                    $transaction->trx          = getTrx();
+                    $transaction->remark       = 'win_bonus';
+                    $transaction->post_balance = $user->balance;
+                    $transaction->save();
 
-                $ticket->status = Status::PUBLISHED;
-                $ticket->save();
+                    $ticket->status = Status::PUBLISHED;
+                    $ticket->save();
 
-                if ($general->win_commission == Status::ENABLE) {
-                    levelCommission($user->id, $bonus, 'win_commission');
+                    if ($general->win_commission == Status::ENABLE) {
+                        levelCommission($user->id, $bonus, 'win_commission');
+                    }
+
+                    notify($user, 'WIN_EMAIL', [
+                        'lottery'  => $ticket->lottery->name,
+                        'number'   => $numbers,
+                        'amount'   => getAmount($bonus),
+                        'level'    => @$winBonus[$key]->level,
+                        'currency' => $general->cur_text
+                    ]);
                 }
-
-                notify($user, 'WIN_EMAIL', [
-                    'lottery'  => $ticket->lottery->name,
-                    'number'   => $numbers,
-                    'amount'   => getAmount($bonus),
-                    'level'    => @$winBonus[$key]->level,
-                    'currency' => $general->cur_text
-                ]);
             }
 
             $phase->draw_status = Status::COMPLETE;

@@ -47,21 +47,30 @@
                                                     <div class="ticket-card__header">
                                                         <h4><?php echo app('translator')->get('Your Ticket Number'); ?></h4>
                                                     </div>
-                                                    <div class="ticket-card__body elements">
+                                                    <div class="ticket-card__body elements" id="unique-numbers">
                                                         <input class="numVal" name="number[]" type="hidden">
-                                                        <div class="numbers uniqueNumbers mb-4">
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
-                                                            <span>0</span>
+                                                        <div class="number-group numbers uniqueNumbers mb-4">
+                                                            <?php for($i = 0 ; $i < $phase->digits; $i++): ?>
+                                                                <span>0</span>
+                                                            <?php endfor; ?>
                                                         </div>
-                                                        <button class="btn btn-md btn--base w-100 generate" type="button"><?php echo app('translator')->get('Generate'); ?></button>
+                                                        <div class="form-group uniqueNumbers row ps-3 pe-3" style="display: none;">
+                                                            <input class="form-control numberItem col-12"  type="number" placeholder="Enter Number" maxlength="<?php echo e($phase->digits); ?>"  />
+                                                            <span style="display: none; color: red;" class="errMsg col-12 mt-3"></span>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input" data-type="unique-numbers" data-id="generates1" type="radio" name="isGenerates" value="true" checked>
+                                                                <label class="form-check-label" for="generates1">
+                                                                    Generate Number
+                                                                </label>
+                                                            </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input value="false" data-id="generates2" data-type="unique-numbers" class="form-check-input" type="radio" name="isGenerates">
+                                                                <label class="form-check-label" for="generates2">
+                                                                    Enter Number
+                                                                </label>
+                                                        </div>
+                                                        <button class="btn btn-md btn--base w-100 generate" data-type="unique-numbers" type="button"><?php echo app('translator')->get('Generate'); ?></button>
                                                     </div>
                                                 </div><!-- ticket-card end -->
                                             </div>
@@ -218,14 +227,52 @@
     <script type="text/javascript">
         (function($) {
             "use strict";
+            var digits = <?php echo e($phase->digits); ?>
+
+            const e = Number(`1e${digits - 1}`);
+            const min = e;
+            const max = Number(e.toString().replaceAll(1,9).replaceAll(0,9));
+            const errorMsg = `Ticket number must be between ${min} and ${max}`
+            
             $(window).on('load', function() {
                 var element = $('.elements').length;
                 addMoreBtn(element);
+                
+                var inputElements = $('.form-check-input');
+                $.each(inputElements, function (index, element) {
+                    element = $(element);
+                    element.closest('.form-group').find('label').attr('for', element.attr('name'));
+                    element.attr('id', element.data('id'))
+                });
+                $('.numberItem').attr("placeholder",'0'.repeat(digits))
+                $('.numberItem').on('input', function() {
+                    let val =  $(this).val();
+                    $(this).val(val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'));
+                })
+                // CHECK IF TYPE NUMBER 
+                $('#unique-numbers .numberItem').on('change', function (e) {
+                    const val = $(this).val()
+                    if ( val < min || val > max ){
+                        $(`#unique-numbers .errMsg`).show();
+                        notify('error',errorMsg)
+                    } else {
+                        $(`#unique-numbers .errMsg`).hide();
+                        var tendigitrandom = $(this).val();
+                        var array = tendigitrandom.toString().split('');
+                        var newArray = [];
+                        $.each(array, function(index, value) {
+                            newArray[index] = `<span>${value}</span>`;
+                        });
+                        $(this).parents('#unique-numbers.elements').children('.numbers').html(newArray);
+                        $(this).parents('#unique-numbers.elements').children('.numbers').addClass('active');
+                        $(this).parents('#unique-numbers.elements').children('.numbers').removeClass('op-0-3');
+                        $(this).parents('#unique-numbers.elements').children('.numVal').val(tendigitrandom);
+                    }
+                });
             });
 
             $('.addMore').click(function() {
                 var element = $('.elements').length + 1
-
                 var html = `
                         <div class="col-xl-4 col-md-6 elem">
                             <div class="ticket-card">
@@ -233,26 +280,39 @@
                                 <div class="ticket-card__header">
                                     <h4><?php echo app('translator')->get('Your Ticket Number'); ?></h4>
                                 </div>
-                                <div class="ticket-card__body elements">
+                                <div class="ticket-card__body elements" id="unique-numbers-${element}">
                                     <input type="hidden" class="numVal" name="number[]">
-                                    <div class="numbers uniqueNumbers mb-4">
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
-                                        <span>0</span>
+                                    <div id="numbers-${element}" class="number-group numbers uniqueNumbers mb-4"></div>
+                                    <div class="form-group uniqueNumbers row ps-3 pe-3" style="display: none;" >
+                                        <input class="form-control numberItem col-12"  type="number" />
+                                        <span style="display: none; color: red;" class="errMsg col-12 mt-3"></span>
                                     </div>
-                                    <button type="button" class="btn btn-md btn--base w-100 generate"><?php echo app('translator')->get('Generate Number'); ?></button>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" data-type="unique-numbers-${element}" id="generates1_${element}" type="radio" name="isGenerates${element}" value="true" checked>
+                                            <label class="form-check-label" for="generates1_${element}">
+                                                Generate number
+                                            </label>
+                                        </div>
+                                    <div class="form-check form-check-inline">
+                                        <input value="false" id="generates2_${element}" class="form-check-input"  data-type="unique-numbers-${element}" type="radio" value="false" name="isGenerates${element}">
+                                            <label class="form-check-label" for="generates2_${element}">
+                                                Enter number
+                                            </label>
+                                    </div>
+                                    <button type="button" class="btn btn-md btn--base w-100 generate" data-type="unique-numbers-${element}"><?php echo app('translator')->get('Generate Number'); ?></button>
                                 </div>
                             </div>
                         </div>
                 	`;
                 $('#tickets').append(html);
+                for (let i = 0 ; i < digits; i++) {
+                    $(`#numbers-${element}`).append('<span>0</span>')
+                }
+                $('.numberItem').attr("placeholder",'0'.repeat(digits))
+                $('.numberItem').on('input', function() {
+                    let val =  $(this).val();
+                    $(this).val(val.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'));
+                })
                 $('.qnt').html(element);
                 $('.tam').html(element * <?php echo e($phase->lottery->price); ?>);
                 $('input[name=ticket_quantity]').val(element);
@@ -280,11 +340,47 @@
                 } else {
                     $('.addMore').removeClass('d-none');
                 }
+
+                $(`.errMsg`).html(errorMsg)
+                
+                $('input[type=radio]').change(function() {
+                    let dataType = $(this).data('type');
+                    let value = $(this).val();
+                    if ( value == "true") {
+                        $(`#${dataType} .form-group`).hide();
+                        $(`#${dataType} .number-group`).show();
+                        $(`#${dataType} .generate`).show();
+                    } else {
+                        $(`#${dataType} .form-group`).show();
+                        $(`#${dataType} .number-group`).hide();
+                        $(`#${dataType} .generate`).hide();
+                    }
+                })
+
+                $(`#unique-numbers-${count} .numberItem`).on('change', function (e) {
+                    const val = $(this).val()
+                    if ( val < min || val > max ){
+                        $(`#unique-numbers-${count} .errMsg`).show();
+                        notify('error',errorMsg)
+                    } else {
+                        $(`#unique-numbers-${count} .errMsg`).hide();
+                        var tendigitrandom = $(this).val();
+                        var array = tendigitrandom.toString().split('');
+                        var newArray = [];
+                        $.each(array, function(index, value) {
+                            newArray[index] = `<span>${value}</span>`;
+                        });
+                        $(this).parents(`#unique-numbers-${count}.elements`).children('.numbers').html(newArray);
+                        $(this).parents(`#unique-numbers-${count}.elements`).children('.numbers').addClass('active');
+                        $(this).parents(`#unique-numbers-${count}.elements`).children('.numbers').removeClass('op-0-3');
+                        $(this).parents(`#unique-numbers-${count}.elements`).children('.numVal').val(tendigitrandom);
+                    }
+                });
             }
 
-            function randomTicketGenerate() {
+            function randomTicketGenerate(elements) {
                 $('.generate').click(function() {
-                    var randomNum = Math.floor(1000000000 + Math.random() * 9000000000);
+                    var randomNum = Math.floor(1 * e + Math.random() * 9 * e);
                     var array = randomNum.toString().split('');
                     var newArray = [];
 
@@ -296,14 +392,18 @@
                     $(this).parents('.elements').children('.numbers').addClass('active');
                     $(this).parents('.elements').children('.numbers').removeClass('op-0-3');
                     $(this).parents('.elements').children('.numVal').val(randomNum);
+                    // SET VALUE FOR FORM IF GENERATE 
+                    let dataType = $(this).data('type');
+                    $(`#${dataType} .errMsg`).hide();
+                    $(`#${dataType} .numberItem`).val(randomNum);
                 });
             }
 
             $('.generate').click(function() {
-                var tendigitrandom = Math.floor(1000000000 + Math.random() * 9000000000);
+                const e = Number(`1e${digits - 1}`);
+                var tendigitrandom = Math.floor(1 * e + Math.random() * 9 * e);
                 var array = tendigitrandom.toString().split('');
                 var newArray = [];
-
                 $.each(array, function(index, value) {
                     newArray[index] = `<span>${value}</span>`;
                 });
@@ -313,6 +413,10 @@
                 $(this).parents('.elements').children('.numbers').addClass('active');
                 $(this).parents('.elements').children('.numbers').removeClass('op-0-3');
                 $(this).parents('.elements').children('.numVal').val(tendigitrandom);
+                // SET VALUE FOR FORM IF GENERATE 
+                let dataType = $(this).data('type');
+                $(`#${dataType} .errMsg`).hide();
+                $(`#${dataType} .numberItem`).val(tendigitrandom);
             });
 
 
@@ -340,6 +444,20 @@
                 }
 
             });
+
+            $('input[type=radio]').change(function() {
+                let dataType = $(this).data('type');
+                let value = $(this).val();
+                if ( value == "true") {
+                    $(`#${dataType} .form-group`).hide();
+                    $(`#${dataType} .number-group`).show();
+                    $(`#${dataType} .generate`).show();
+                } else {
+                    $(`#${dataType} .form-group`).show();
+                    $(`#${dataType} .number-group`).hide();
+                    $(`#${dataType} .generate`).hide();
+                }
+            })
         })(jQuery);
     </script>
 <?php $__env->stopPush(); ?>

@@ -34,7 +34,7 @@
 
                             <li class="list-group-item"><?php echo app('translator')->get('Total Sell Amount'); ?>: <strong><?php echo e(getAmount($tickets->sum('total_price'))); ?> <?php echo e($general->cur_text); ?></strong></li>
 
-                            <li class="list-group-item"><?php echo app('translator')->get('Winner'); ?>: <strong> <?php echo e($phase->lottery->bonuses->count()); ?> <?php echo app('translator')->get('Persons'); ?></strong></li>
+                            <li class="list-group-item"><?php echo app('translator')->get('Winner'); ?>: <strong> <?php echo e($phase->lottery->bonuses->count()); ?> <?php echo app('translator')->get('Tickets'); ?></strong></li>
                             <li class="list-group-item"><?php echo app('translator')->get('Win Bonus Amount'); ?>: <strong><?php echo e($phase->lottery->bonuses->sum('amount')); ?> <?php echo e($general->cur_text); ?></strong></li>
                         </ul>
                     <?php else: ?>
@@ -48,7 +48,7 @@
         <form action="<?php echo e(route('admin.lottery.draw.win', $phase->id)); ?>" method="post">
             <?php echo csrf_field(); ?>
             <div class="row result_panle">
-                <?php $__empty_2 = true; $__currentLoopData = $tickets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ticket): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_2 = false; ?>
+                <?php $__empty_2 = true; $__currentLoopData = $ticketsGroupByNumber; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ticket): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_2 = false; ?>
                     <div class="col-md-3 mb-3">
                         <div class="card ticket-card">
                             <div class="input-fields">
@@ -57,17 +57,24 @@
                             <div class="card-body text-center">
 
                                 <ol class="list-group">
-                                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                                        <div class="ms-2 me-auto">
-                                            <?php echo app('translator')->get('Username'); ?>:
-                                        </div>
-                                        <strong class="text-info username" data-ticket="<?php echo e($ticket->ticket_number); ?>"><?php echo e(@$ticket->user->username); ?></strong>
-                                    </li>
+                                    
                                     <li class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">
                                             <?php echo app('translator')->get('Ticket Number'); ?>:
                                         </div>
-                                        <strong class="ticket-number text-primary"><?php echo e($ticket->ticket_number); ?></strong>
+                                        <strong class="ticket-number text-primary"><?php echo e($ticket['ticket_number']); ?></strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div class="ms-2 me-auto">
+                                            <?php echo app('translator')->get('Total Sell Ticket'); ?>:
+                                        </div>
+                                        <strong class="ticket-sell text-primary"><?php echo e(count($ticket['users'])); ?></strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div class="ms-2 me-auto">
+                                            <?php echo app('translator')->get('Total Person Buy Ticket'); ?>:
+                                        </div>
+                                        <strong class="person text-primary"><?php echo e(count($ticket['amount_person'])); ?></strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">

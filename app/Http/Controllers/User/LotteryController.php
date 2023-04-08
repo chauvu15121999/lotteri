@@ -51,11 +51,11 @@ class LotteryController extends Controller
         }
         $tickets = [];
         foreach ($request->number as $ticketNo) {
-            $ticketAvailability = Ticket::where('ticket_number', $ticketNo)->first();
-            if ($ticketAvailability) {
-                $notify[] = ['error', $ticketAvailability->ticket_number . ' - ' . 'Ticket already sold please try another.'];
-                return back()->withNotify($notify);
-            }
+            // $ticketAvailability = Ticket::where('ticket_number', $ticketNo)->first();
+            // if ($ticketAvailability) {
+            //     $notify[] = ['error', $ticketAvailability->ticket_number . ' - ' . 'Ticket already sold please try another.'];
+            //     return back()->withNotify($notify);
+            // }
             $ticket          = [];
             $ticket['lottery_id']    = $request->lottery_id;
             $ticket['phase_id']      = $request->phase_id;

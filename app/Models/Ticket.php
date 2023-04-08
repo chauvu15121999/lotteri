@@ -38,9 +38,11 @@ class Ticket extends Model
     {
         $html = '';
         if($this->status == Status::PUBLISHED){
-            $html = '<span class="badge badge--success">'.trans("PUBLISHED").'</span>';
+            $html = '<span class="badge badge--success">'.trans("WON").'</span>';
+        } elseif ($this->phase->draw_status && $this->status == Status::UNPUBLISHED ) {
+            $html = '<span class="badge badge--danger">'.trans("TRY AGAIN").'</span>';
         }
-        elseif($this->status == Status::UNPUBLISHED){
+        elseif(!$this->phase->draw_status && $this->status == Status::UNPUBLISHED){
             $html = '<span class="badge badge--warning">'.trans("WILL PUBLISHED").'</span>';
         }
         return $html;

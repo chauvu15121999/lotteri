@@ -36,7 +36,7 @@
 
                             <li class="list-group-item">@lang('Total Sell Amount'): <strong>{{ getAmount($tickets->sum('total_price')) }} {{ $general->cur_text }}</strong></li>
 
-                            <li class="list-group-item">@lang('Winner'): <strong> {{ $phase->lottery->bonuses->count() }} @lang('Persons')</strong></li>
+                            <li class="list-group-item">@lang('Winner'): <strong> {{ $phase->lottery->bonuses->count() }} @lang('Tickets')</strong></li>
                             <li class="list-group-item">@lang('Win Bonus Amount'): <strong>{{ $phase->lottery->bonuses->sum('amount') }} {{ $general->cur_text }}</strong></li>
                         </ul>
                     @else
@@ -50,7 +50,7 @@
         <form action="{{ route('admin.lottery.draw.win', $phase->id) }}" method="post">
             @csrf
             <div class="row result_panle">
-                @forelse($tickets as $ticket)
+                @forelse($ticketsGroupByNumber as $ticket)
                     <div class="col-md-3 mb-3">
                         <div class="card ticket-card">
                             <div class="input-fields">
@@ -59,17 +59,29 @@
                             <div class="card-body text-center">
 
                                 <ol class="list-group">
-                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                    {{-- <li class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">
                                             @lang('Username'):
                                         </div>
                                         <strong class="text-info username" data-ticket="{{ $ticket->ticket_number }}">{{ @$ticket->user->username }}</strong>
-                                    </li>
+                                    </li> --}}
                                     <li class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">
                                             @lang('Ticket Number'):
                                         </div>
-                                        <strong class="ticket-number text-primary">{{ $ticket->ticket_number }}</strong>
+                                        <strong class="ticket-number text-primary">{{ $ticket['ticket_number'] }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div class="ms-2 me-auto">
+                                            @lang('Total Sell Ticket'):
+                                        </div>
+                                        <strong class="ticket-sell text-primary">{{ count($ticket['users'])}}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                                        <div class="ms-2 me-auto">
+                                            @lang('Total Person Buy Ticket'):
+                                        </div>
+                                        <strong class="person text-primary">{{ count($ticket['amount_person'])}}</strong>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-start">
                                         <div class="ms-2 me-auto">
